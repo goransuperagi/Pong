@@ -1,0 +1,108 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Pong</title>
+<style>
+  html,body{margin:0;background:#111;color:#fff;font:14px/1.2 system-ui}
+  #c{display:block;margin:auto;background:#000;outline:1px solid #333}
+  #hud{position:fixed;inset:10px auto auto 50%;transform:translateX(-50%)}
+  /* --- BOTTERNAV (enda synliga raden) --- */
+  footer.nav{position:fixed;left:8px;bottom:8px;font-size:11px;color:#aaa}
+  footer.nav a{color:#aaa;text-decoration:none;margin-right:12px}
+  footer.nav a:hover{color:#fff;text-decoration:underline}
+
+  /* --- Minimal CSS-popup med :target (ingen JS) --- */
+  .popup{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6)}
+  .popup:target{display:block}
+  .popup .box{
+    background:#1a1a1a;border:1px solid #2b2b2b;border-radius:8px;
+    max-width:720px;margin:8vh auto;padding:14px
+  }
+  .popup h2{margin:.2rem 0 .4rem;font-size:16px}
+  .popup p, .popup ol{margin:.3rem 0;color:#ddd;font-size:13px}
+  .row{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+  .btn{display:inline-block;background:#2a2a2a;border:1px solid #3a3a3a;
+       color:#fff;padding:.45rem .6rem;border-radius:6px;font-size:12px;text-decoration:none}
+  .btn:hover{background:#333}
+  .close{margin-left:auto}
+  .actions{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+
+  @media (max-width:760px){.row{grid-template-columns:1fr}}
+</style></head>
+<body>
+
+<div id="hud">W/S = vänster | ↑/↓ = höger</div>
+<canvas id="c" width="800" height="500" aria-label="Pong-spel"></canvas>
+
+<!-- ENDA SYNLIGA RADEN -->
+<footer class="nav" aria-label="Sidolänkar">
+  <a href="#publicera">Publicera</a>
+  <a href="#readme">README</a>
+</footer>
+
+<!-- POPUP: PUBLICERA -->
+<section id="publicera" class="popup" role="dialog" aria-modal="true" aria-labelledby="pubTitle">
+  <div class="box">
+    <div class="actions">
+      <a class="btn close" href="#" aria-label="Stäng">Stäng</a>
+    </div>
+    <h2 id="pubTitle">Publicera din sida</h2>
+    <div class="row">
+      <div>
+        <h3 style="margin:.2rem 0">GitHub Pages</h3>
+        <ol>
+          <li>Skapa repo: <a class="btn" href="https://github.com/new" target="_blank" rel="noopener">Öppna GitHub</a></li>
+          <li>Ladda upp <strong>index.html</strong> i root.</li>
+          <li>Gå till <em>Settings → Pages</em>, välj <em>Deploy from branch</em>.</li>
+          <li>Vänta − din publicerade URL visas i Pages.</li>
+        </ol>
+      </div>
+      <div>
+        <h3 style="margin:.2rem 0">Netlify (en fil)</h3>
+        <ol>
+          <li>Öppna <a class="btn" href="https://app.netlify.com/drop" target="_blank" rel="noopener">Netlify Drop</a>.</li>
+          <li>Dra & släpp <strong>index.html</strong>.</li>
+          <li>Klart — Netlify ger direkt en URL.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- POPUP: README -->
+<section id="readme" class="popup" role="dialog" aria-modal="true" aria-labelledby="readmeTitle">
+  <div class="box">
+    <div class="actions">
+      <a class="btn close" href="#" aria-label="Stäng">Stäng</a>
+    </div>
+    <h2 id="readmeTitle">README</h2>
+    <p><strong>Tangentbord:</strong> <kbd>W/S</kbd> (vänster) • <kbd>↑/↓</kbd> (höger).</p>
+    <p><strong>Så kör du lokalt:</strong> Spara denna sida som <code>index.html</code> och dubbelklicka för att öppna i webbläsaren.</p>
+    <p><strong>Teknik:</strong> En fil, ingen extern CSS/JS. Spelloop med <code>requestAnimationFrame</code>.</p>
+  </div>
+</section>
+
+<script>
+const cv=document.getElementById('c'),cx=cv.getContext('2d'),W=cv.width,H=cv.height;
+let p1={x:20,y:H/2-40,w:12,h:80,dy:0},p2={x:W-32,y:H/2-40,w:12,h:80,dy:0};
+let ball={x:W/2,y:H/2,r:8,dx:4*(Math.random()>.5?1:-1),dy:3*(Math.random()>.5?1:-1)};
+let s1=0,s2=0; const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+onkeydown=e=>{if(e.key=='w')p1.dy=-6; if(e.key=='s')p1.dy=6; if(e.key=='ArrowUp')p2.dy=-6; if(e.key=='ArrowDown')p2.dy=6;}
+onkeyup  =e=>{if(['w','s'].includes(e.key))p1.dy=0; if(['ArrowUp','ArrowDown'].includes(e.key))p2.dy=0;}
+function reset(dir=1){ball.x=W/2;ball.y=H/2;ball.dx=4*dir;ball.dy=(Math.random()*4+2)*(Math.random()>.5?1:-1);}
+function coll(r){return ball.x+ball.r>r.x && ball.x-ball.r<r.x+r.w && ball.y+ball.r>r.y && ball.y-ball.r<r.y+r.h;}
+function step(){
+  p1.y=clamp(p1.y+p1.dy,0,H-p1.h); p2.y=clamp(p2.y+p2.dy,0,H-p2.h);
+  ball.x+=ball.dx; ball.y+=ball.dy;
+  if(ball.y<ball.r||ball.y>H-ball.r)ball.dy*=-1;
+  if(coll(p1)&&ball.dx<0){ ball.dx*=-1; ball.dy+=(ball.y-(p1.y+p1.h/2))*0.05; }
+  if(coll(p2)&&ball.dx>0){ ball.dx*=-1; ball.dy+=(ball.y-(p2.y+p2.h/2))*0.05; }
+  if(ball.x<0){s2++; reset(1);} if(ball.x>W){s1++; reset(-1);}
+  cx.clearRect(0,0,W,H);
+  cx.fillStyle="#0f0"; cx.fillRect(p1.x,p1.y,p1.w,p1.h); cx.fillRect(p2.x,p2.y,p2.w,p2.h);
+  cx.beginPath(); cx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); cx.fillStyle="#fff"; cx.fill();
+  cx.fillStyle="#888"; for(let y=0;y<H;y+=20)cx.fillRect(W/2-1,y,2,10);
+  cx.fillStyle="#fff"; cx.font="24px system-ui"; cx.fillText(s1, W/2-60, 30); cx.fillText(s2, W/2+40, 30);
+  requestAnimationFrame(step);
+}
+step();
+</script>
+
+</body></html>
